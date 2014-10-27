@@ -9,7 +9,7 @@ CC := gcc
 
 #all: dirs helloOpenGL tetera planetario
 
-all: dirs ejercicio1
+all: dirs ejercicio2
 
 dirs:
 	mkdir -p $(DIROBJ) $(DIREXE)
@@ -17,6 +17,10 @@ dirs:
 ejercicio1: $(DIROBJ)ejercicio1.o 
 	$(CC) -o $(DIREXE)$@ $^ $(LDFLAGS)
 	./exec/ejercicio1
+
+ejercicio2: $(DIROBJ)ejercicio2.o 
+	$(CC) -o $(DIREXE)$@ $^ $(LDFLAGS)
+	./exec/ejercicio2
 
 helloOpenGL: $(DIROBJ)helloOpenGL.o 
 	$(CC) -o $(DIREXE)$@ $^ $(LDFLAGS)
