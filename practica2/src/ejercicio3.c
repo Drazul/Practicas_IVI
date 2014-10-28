@@ -41,12 +41,19 @@ void render () {
   glutSwapBuffers();
 }
 
+void keyHandle(unsigned char key, int x, int y){
+  if (key == 'c') type = -type;
+  glutPostRedisplay();
+}
+
 void SelectFromMenu(int idCommand){
   switch (idCommand){
-    case MENU_BLANCO: keyHandle('c', 0, 0); break;
-    case MENU_COLOR: keyHandle('c', 0, 0); break;
+    case MENU_BLANCO: type = 1; break;
+    case MENU_COLOR: type = -1; break;
     case MENU_EXIT: exit(0);
   }
+  glutPostRedisplay();
+
 }
 
 int BuildPopupMenu (void)
@@ -75,11 +82,6 @@ void resize (int w, int h) {
 
 void init (void) {
   glEnable(GL_DEPTH_TEST);
-}
-
-void keyHandle(unsigned char key, int x, int y){
-  if (key == 'c') type = -type;
-  glutPostRedisplay();
 }
 
 int main(int argc, char *argv[]) {
