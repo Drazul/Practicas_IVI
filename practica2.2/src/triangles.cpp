@@ -67,8 +67,8 @@ void init () {
 /* Retrollamada de rendering */
 void display () {
   /* Limpia el framebuffer*/
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+  /*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);*/
+  glClear(GL_COLOR_BUFFER_BIT);
   /* Selecciona el array de vértices a utilizar */ 
   glBindVertexArray(VAOs[Triangles]);
   /* Envío de la geometría al pipeline de OpenGL*/

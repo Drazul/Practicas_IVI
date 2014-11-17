@@ -45,7 +45,7 @@ void render () {
   glRotatef(luna2_orbita, 0.0, 0.0, 1.0);
   glTranslatef(DIST_LUNA, 0.0, 0.0);
   glColor3ub (0, 255, 0);
-  glutWireSphere (0.15, 8, 8);
+  glutWireSphere (0.18, 8, 8);
   /* Intercambio de buffers... Representation ---> Window */
   glutSwapBuffers();      
 } 
