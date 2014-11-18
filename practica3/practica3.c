@@ -7,8 +7,10 @@
 
 
 // ==== Definicion de constantes y variables globales ===============
-int    patt_id;            // Identificador unico de la marca
+int    patt_id1, patt_id2;            // Identificador unico de la marca
 double patt_trans[3][4];   // Matriz de transformacion de la marca
+int dibujar = 0; //Con esta variable diferencio que color de tetera dibujar
+                 // Con 0 dibuja verde, con otro valor dibuja azul
 
 void print_error (char *error) {  printf(error); exit(0); }
 // ======== cleanup =================================================
@@ -21,7 +23,19 @@ static void cleanup(void) {
 // ======== draw ====================================================
 static void draw( void ) {
   double  gl_para[16];   // Esta matriz 4x4 es la usada por OpenGL
-  GLfloat mat_ambient[]     = {0.0, 0.0, 1.0, 1.0};
+
+  GLfloat g = 0.0, b = 1.0;
+
+  if (dibujar == 0){
+    g = 1.0;
+    b = 0.0;
+  } else {
+    g = 0.0;
+    b = 1.0;
+  }
+
+  GLfloat mat_ambient[]     = {0.0, g, b, 1.0};
+
   GLfloat light_position[]  = {100.0,-200.0,200.0,0.0};
   
   argDrawMode3D();              // Cambiamos el contexto a 3D
@@ -61,7 +75,9 @@ static void init( void ) {
   arInitCparam(&cparam);   // Inicializamos la camara con "cparam"
 
   // Cargamos la marca que vamos a reconocer en este ejemplo
-  if((patt_id=arLoadPatt("data/simple.patt")) < 0) 
+  if((patt_id1=arLoadPatt("data/simple.patt")) < 0) 
+    print_error ("Error en carga de patron\n");
+  if((patt_id2=arLoadPatt("data/esi.patt")) < 0) 
     print_error ("Error en carga de patron\n");
 
   argInit(&cparam, 1.0, 0, 0, 0, 0);   // Abrimos la ventana 
@@ -94,16 +110,18 @@ static void mainLoop(void) {
 
   // Vemos donde detecta el patron con mayor fiabilidad
   for(j = 0, k = -1; j < marker_num; j++) {
-    if(patt_id == marker_info[j].id) {
+    if(patt_id1 == marker_info[j].id || patt_id2 == marker_info[j].id) {
       if (k == -1)  k = j;
-      else if(marker_info[k].cf < marker_info[j].cf) k = j;
-      printf("Marcadores (marker_num) %d - (Marca %d, cf: %f)", marker_num, marker_info[k].id, marker_info[k].cf);
+      else if(marker_info[k].cf < marker_info[j].cf)  k = j;
     }
-    printf(" (Marca %d, cf: %f)\n", marker_info[k].id, marker_info[k].cf);
+    if(patt_id1 == marker_info[j].id) printf("Confianza marca 1 %f .", marker_info[j].cf);
+    if(patt_id2 == marker_info[j].id) printf ("Confianza marca ESI %f .", marker_info[j].cf);
   }
-  printf("\n");
 
   if(k != -1) {   // Si ha detectado el patron en algun sitio...
+    printf("\n");
+    if (marker_info[k].id == patt_id2) dibujar = 0;
+    else dibujar = 1;
     // Obtener transformacion relativa entre la marca y la camara real
     arGetTransMat(&marker_info[k], p_center, p_width, patt_trans);
     draw();       // Dibujamos los objetos de la escena
