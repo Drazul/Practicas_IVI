@@ -42,29 +42,32 @@ static void draw( void ) {
 
   glEnable(GL_LIGHTING);  glEnable(GL_LIGHT0);
   glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-  
-  if (dmode == 0) {  // Dibujar cubos en marcas
-    for(i=0; i < mMarker->marker_num; i++) {
-      glPushMatrix();   // Guardamos la matriz actual
-      argConvGlpara(mMarker->marker[i].trans, gl_para);   
-      glMultMatrixd(gl_para);               
-      if(mMarker->marker[i].visible < 0) {  // No se ha detectado
-	material[0] = 1.0; material[1] = 0.0; material[2] = 0.0; }
-      else {           // Se ha detectado (ponemos color verde)
-	material[0] = 0.0; material[1] = 1.0; material[2] = 0.0; }
-      glMaterialfv(GL_FRONT, GL_AMBIENT, material);
-      glTranslatef(0.0, 0.0, 25.0);
-      glutSolidCube(50.0);
-      glPopMatrix();   // Recuperamos la matriz anterior
-    }
-  } else { // Dibujar objeto global
-    glMaterialfv(GL_FRONT, GL_AMBIENT, material);
-    glTranslatef(150.0, -100.0, 60.0);
-    glRotatef(90.0, 1.0, 0.0, 0.0);
-    glutSolidTeapot(90.0);    
-  }
 
+  glMaterialfv(GL_FRONT, GL_AMBIENT, material);
+  //glutSolidTeapot(90.0); 
+  drawQuad();  
   glDisable(GL_DEPTH_TEST);
+}
+
+/*
+void drawline (float w, float r, float g, float b, float x1, y1, z1, x2, y2, z2) {
+  glLineWidth(w);
+  glColor3f(rg,b);
+  glVertex3f(x1,y1,z1);
+  glVertex3f/x2,y2,z2);
+  glEnd();
+}
+*/
+
+void drawQuad () {
+  glColor3f(255, 255, 255);
+  glBegin(GL_QUADS);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, -210, 0);
+    glVertex3f(297, -210, 0);
+    glVertex3f(297, 0, 0);
+  glEnd();
+
 }
 
 // ======== init ====================================================

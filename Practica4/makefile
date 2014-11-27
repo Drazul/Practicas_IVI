@@ -7,7 +7,10 @@ LIBS   = -lARgsub -lARvideo -lARMulti -lAR -lglut -lGLU -lGL -lm
 
 NAMEEXEC     = main
 
-all: $(NAMEEXEC)
+all: $(NAMEEXEC) exe
+
+exe:
+	./$(NAMEEXEC)
 
 $(NAMEEXEC): $(NAMEEXEC).c 
 	cc -I $(INC_DIR) -o $(NAMEEXEC) $(NAMEEXEC).c -L$(LIB_DIR) $(LIBS) 
