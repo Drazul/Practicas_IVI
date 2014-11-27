@@ -23,12 +23,36 @@ static void keyboard(unsigned char key, int x, int y) {
   }
 }
 
+
+void drawline (float w, float r, float g, float b, 
+                      float x1, float y1, float z1, 
+                      float x2, float y2, float z2) {
+
+  glColor3f(r, g, b);
+  glLineWidth(w);
+  glBegin(GL_LINES);
+    glVertex3f(x1, y1, z1);
+    glVertex3f(x2, y2, z2);
+  glEnd();
+}
+
+
+void drawQuad () {
+  glColor3f(1, 1, 1);
+  glBegin(GL_QUADS);
+    glVertex3f(0, 0, 0);
+    glVertex3f(0, -210, 0);
+    glVertex3f(297, -210, 0);
+    glVertex3f(297, 0, 0);
+  glEnd();
+
+  drawline(5, 1, 0, 0, 0, 0, 0, 297, 0, 0);
+  drawline(5, 0, 1, 0, 0, 0, 0, 0, -210, 0);
+  drawline(5, 0, 0, 1, 0, 0, 0, 0, 0, 210);
+}
 // ======== draw ====================================================
 static void draw( void ) {
   double  gl_para[16];   // Esta matriz 4x4 es la usada por OpenGL
-  GLfloat material[]        = {1.0, 1.0, 1.0, 1.0};
-  GLfloat light_position[]  = {100.0,-200.0,200.0,0.0};
-  int i;
   
   argDrawMode3D();              // Cambiamos el contexto a 3D
   argDraw3dCamera(0, 0);        // Y la vista de la camara a 3D
@@ -40,34 +64,8 @@ static void draw( void ) {
   glMatrixMode(GL_MODELVIEW);           
   glLoadMatrixd(gl_para);               
 
-  glEnable(GL_LIGHTING);  glEnable(GL_LIGHT0);
-  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT, material);
-  //glutSolidTeapot(90.0); 
   drawQuad();  
   glDisable(GL_DEPTH_TEST);
-}
-
-/*
-void drawline (float w, float r, float g, float b, float x1, y1, z1, x2, y2, z2) {
-  glLineWidth(w);
-  glColor3f(rg,b);
-  glVertex3f(x1,y1,z1);
-  glVertex3f/x2,y2,z2);
-  glEnd();
-}
-*/
-
-void drawQuad () {
-  glColor3f(255, 255, 255);
-  glBegin(GL_QUADS);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, -210, 0);
-    glVertex3f(297, -210, 0);
-    glVertex3f(297, 0, 0);
-  glEnd();
-
 }
 
 // ======== init ====================================================
