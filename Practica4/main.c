@@ -84,12 +84,12 @@ void drawQuad () {
 }
 
 // ==== draw****** (Dibujado especifico de cada objeto) =============
-void drawteapot(void) {
-  GLfloat material[]     = {0.0, 0.0, 1.0, 1.0};
-  glMaterialfv(GL_FRONT, GL_AMBIENT, material);
-  glTranslatef(0.0, 0.0, 60.0);
-  glRotatef(90.0, 1.0, 0.0, 0.0);
-  glutSolidTeapot(80.0);
+void drawPointer(void) {
+  glColor3f(0.5, 0.5, 0.5);
+  glPointSize(10.0);
+  glBegin(GL_POINTS);
+    glVertex3f(0, 0, 0);
+  glEnd();
 }
 
 // ======== draw ====================================================
@@ -107,16 +107,13 @@ static void draw( void ) {
   glLoadMatrixd(gl_para);               
 
   drawQuad();  
-  
+
   int i;
   for (i=0; i<nobjects; i++) {
     if (objects[i].visible) {   // Si el objeto es visible
       argConvGlpara(objects[i].patt_trans, gl_para);   
       glMatrixMode(GL_MODELVIEW);           
       glLoadMatrixd(gl_para);   // Cargamos su matriz de transf.            
-/*
-      glEnable(GL_LIGHTING);  glEnable(GL_LIGHT0);
-      glLightfv(GL_LIGHT0, GL_POSITION, light_position);*/
       objects[i].drawme();      // Llamamos a su función de dibujar
     }
   }
@@ -145,7 +142,7 @@ static void init( void ) {
   if( (mMarker = arMultiReadConfigFile("data/marker.dat")) == NULL )
     print_error("Error en fichero marker.dat\n");
 
-  addObject("data/simple.patt", 120.0, c, drawteapot); 
+  addObject("data/simple.patt", 120.0, c, drawPointer); 
 
   argInit(&cparam, 1.0, 0, 0, 0, 0);   // Abrimos la ventana 
 }
