@@ -12,7 +12,6 @@ ARMultiMarkerInfoT *mMarker;    // Estructura global Multimarca
 int simple_patt_id;             // Identificador unico de la marca simple
 double simple_patt_trans[3][4]; // Matriz de transformacion de la marca simple
 
-int dmode = 0;   // Modo dibujo (objeto centrado o cubos en marcas)
 
 // ======== cleanup =================================================
 static void cleanup(void) {   // Libera recursos al salir ...
@@ -23,7 +22,6 @@ static void cleanup(void) {   // Libera recursos al salir ...
 static void keyboard(unsigned char key, int x, int y) {
   switch (key) {
   case 0x1B: case 'Q': case 'q':  cleanup(); break;
-  case 'D': case'd': if (dmode == 0) dmode=1; else dmode=0; break;
   }
 }
 
