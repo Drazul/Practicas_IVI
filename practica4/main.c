@@ -8,6 +8,7 @@
 void print_error (char *error) {  printf("%s\n",error); exit(0); }
 
 struct TPaintbrush {            // Representa el pincel
+  float thickness;              // Representa el grosor
   float r;                    
   float g;                  
   float b;                   
@@ -51,6 +52,14 @@ static void keyboard(unsigned char key, int x, int y) {
       if(color + 1 > last) color = 0;
       else color = color + 1;
       setRGB(color);
+      break;
+    case '+': 
+      if (paintbrush.thickness + 1 < 10)
+        paintbrush.thickness ++;
+      break;
+    case '-': 
+      if (paintbrush.thickness -1 > 2)
+        paintbrush.thickness --;
   }
 }
 
@@ -83,7 +92,7 @@ void drawPointer(double m2[3][4]) {
   glPushMatrix();
   glTranslatef(m2[0][3], m2[1][3], m2[2][3]);
   glColor3f(paintbrush.r, paintbrush.g, paintbrush.b);
-  glutSolidSphere(2, 20, 20);
+  glutSolidSphere(paintbrush.thickness, 20, 20);
   glPopMatrix();
   
   // Se dibujan las proyecciones. Dibujamos linea hasta el borde, trasladamos y dibujamos punto
@@ -167,6 +176,10 @@ static void init( void ) {
 
 
   argInit(&cparam, 1.0, 0, 0, 0, 0);   // Abrimos la ventana 
+
+  paintbrush.thickness = 3.0;
+  color = red;
+  setRGB(red);
 }
 
 // ======== mainLoop ================================================
