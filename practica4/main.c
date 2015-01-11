@@ -85,11 +85,31 @@ void drawQuad () {
 
 // ==== draw****** (Dibujado especifico de cada objeto) =============
 void drawPointer(void) {
-  glColor3f(0.5, 0.5, 0.5);
+  double m[3][4], m2[3][4];
+  //arUtilMatInv(mMarker->trans, m);
+  //arUtilMatMul(m, objects[0].patt_trans, m2);
+  arUtilMatInv(objects[0].patt_trans, m);
+  arUtilMatMul(m, mMarker->trans, m2);
+
   glPointSize(10.0);
-  glBegin(GL_POINTS);
+  glBegin(GL_POINT_SMOOTH);
+    glColor3f(0.5, 0.5, 0.5);
     glVertex3f(0, 0, 0);
+    glColor3f(1, 0, 0);
+    glVertex3f(m2[0][3], 0, 0);
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, m2[2][3]);
+    glColor3f(0, 1, 0);
+    glVertex3f(0, m2[1][3], 0);
   glEnd();
+
+
+  //dist01 = sqrt(pow(m2[0][3],2)+pow(m2[1][3],2)+pow(m2[2][3],2));
+  //printf ("Distancia objects[0] y objects[1]= %G\n", dist01);
+
+  drawline(5, 1, 0, 0, 0, 0, 0, m2[0][3], 0, 0);
+  drawline(5, 0, 0, 1, 0, 0, 0, 0, 0, m2[2][3]);
+  drawline(5, 0, 1, 0, 0, 0, 0, 0, m2[1][3], 0);
 }
 
 // ======== draw ====================================================
@@ -184,9 +204,24 @@ static void mainLoop(void) {
     } else { objects[i].visible = 0; }  // El objeto no es visible
   }
 
-  if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0) 
+  if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0){
     draw();       // Dibujamos los objetos de la escena
-  
+  /*    int i,j;
+  printf("multipatron\n");
+  for(i=0;i<3;i++){
+    for(j=0;j<4;j++)
+      printf("%f\t", mMarker->trans[i][j]);
+    printf("\n");
+  }
+
+  printf("patron\n");
+  for(i=0;i<3;i++){
+    for(j=0;j<4;j++)
+      printf("%f\t", objects[0].patt_trans[i][j]);
+    printf("\n");
+  }
+  sleep(0.5);*/
+  }
   argSwapBuffers(); // Cambiamos el buffer con lo que tenga dibujado
 }
 
