@@ -4,47 +4,15 @@
 #include <AR/param.h>   
 #include <AR/ar.h>
 #include <AR/arMulti.h>
-//06_solucion_dibujo3d
-// ==== Definicion de constantes y variables globales ===============
-ARMultiMarkerInfoT  *mMarker;       // Estructura global Multimarca
-
-int multipatt_id;
-
-// ==== Definicion de estructuras ===================================
-struct TObject{
-  int id;                      // Identificador del patron
-  int visible;                 // Es visible el objeto?
-  double width;                // Ancho del patron
-  double center[2];            // Centro del patron  
-  double patt_trans[3][4];     // Matriz asociada al patron
-  void (* drawme)(void);       // Puntero a funcion drawme
-};
-
-int nobjects = 0;
-struct TObject *objects = NULL;
-
-int dmode = 0;   // Modo dibujo (objeto centrado o cubos en marcas)
-
-// ==== addObject (Anade objeto a la lista de objetos) ==============
-void addObject(char *p, double w, double c[2], void (*drawme)(void)) 
-{
-  int pattid;
-
-  if((pattid=arLoadPatt(p)) < 0) 
-    print_error ("Error en carga de patron\n");
-
-  nobjects++;
-  objects = (struct TObject *) 
-    realloc(objects, sizeof(struct TObject)*nobjects);
-
-  objects[nobjects-1].id = pattid;
-  objects[nobjects-1].width = w;
-  objects[nobjects-1].center[0] = c[0];
-  objects[nobjects-1].center[1] = c[1];
-  objects[nobjects-1].drawme = drawme;
-}
 
 void print_error (char *error) {  printf("%s\n",error); exit(0); }
+
+// ==== Definicion de constantes y variables globales ===============
+ARMultiMarkerInfoT *mMarker;    // Estructura global Multimarca
+int simple_patt_id;             // Identificador unico de la marca simple
+double simple_patt_trans[3][4]; // Matriz de transformacion de la marca simple
+
+int dmode = 0;   // Modo dibujo (objeto centrado o cubos en marcas)
 
 // ======== cleanup =================================================
 static void cleanup(void) {   // Libera recursos al salir ...
@@ -84,60 +52,69 @@ void drawQuad () {
 }
 
 // ==== draw****** (Dibujado especifico de cada objeto) =============
-void drawPointer(void) {
-  double m[3][4], m2[3][4];
-  //arUtilMatInv(mMarker->trans, m);
-  //arUtilMatMul(m, objects[0].patt_trans, m2);
-  arUtilMatInv(objects[0].patt_trans, m);
-  arUtilMatMul(m, mMarker->trans, m2);
+void drawPointer(double m2[3][4]) {
+  // Se dibuja el puntero
+  glPushMatrix();
+  glTranslatef(m2[0][3], m2[1][3], m2[2][3]);
+  glColor3f(0, 0, 0);
+  glutSolidSphere(2, 20, 20);
+  glPopMatrix();
+  
+  // Se dibujan las proyecciones. Dibujamos linea hasta el borde, trasladamos y dibujamos punto
+  drawline(0.5, 1.0, 0.0, 0.0, m2[0][3], m2[1][3], m2[2][3], m2[0][3], 0.0, m2[2][3]);
+  glPushMatrix();
+  glTranslatef(m2[0][3], 0.0, m2[2][3]);
+  glColor3f(1.0, 0.0, 0.0);
+  glutSolidSphere(2.0, 20, 20);
+  glPopMatrix();
+    
+  drawline(0.5, 0.0, 1.0, 0.0, m2[0][3], m2[1][3], m2[2][3], m2[0][3], m2[1][3], 0.0);
+  glPushMatrix();
+  glTranslatef(m2[0][3], m2[1][3], 0.0);
+  glColor3f(0.0, 1.0, 0.0);
+  glutSolidSphere(2.0, 20, 20);
+  glPopMatrix();
 
-  glPointSize(10.0);
-  glBegin(GL_POINT_SMOOTH);
-    glColor3f(0.5, 0.5, 0.5);
-    glVertex3f(0, 0, 0);
-    glColor3f(1, 0, 0);
-    glVertex3f(m2[0][3], 0, 0);
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, m2[2][3]);
-    glColor3f(0, 1, 0);
-    glVertex3f(0, m2[1][3], 0);
-  glEnd();
-
-
-  //dist01 = sqrt(pow(m2[0][3],2)+pow(m2[1][3],2)+pow(m2[2][3],2));
-  //printf ("Distancia objects[0] y objects[1]= %G\n", dist01);
-
-  drawline(5, 1, 0, 0, 0, 0, 0, m2[0][3], 0, 0);
-  drawline(5, 0, 0, 1, 0, 0, 0, 0, 0, m2[2][3]);
-  drawline(5, 0, 1, 0, 0, 0, 0, 0, m2[1][3], 0);
+  drawline(0.5, 0.0, 0.0, 1.0, m2[0][3], m2[1][3], m2[2][3], 0.0, m2[1][3], m2[2][3]);
+  glPushMatrix();
+  glTranslatef(0.0, m2[1][3], m2[2][3]);
+  glColor3f(0.0, 0.0, 1.0);
+  glutSolidSphere(2.0, 20, 20);
+  glPopMatrix();
 }
 
 // ======== draw ====================================================
-static void draw( void ) {
-  double  gl_para[16];   // Esta matriz 4x4 es la usada por OpenGL
+void drawAll(int pointer) {
+  double gl_para[16];         // Esta matriz 4x4 es la usada por OpenGL
+  double m[3][4], m2[3][4];   // Matrices para almacenar la inversa de la matriz del multipatron y para almacenar la posicion relativa entre patron y multipatron
   
-  argDrawMode3D();              // Cambiamos el contexto a 3D
+  // Se calcula la posicion relativa entre patron y multipatron, si se ha detectado la marca que representa el puntero
+  if(pointer != -1) {
+    arUtilMatInv(mMarker->trans, m);
+    arUtilMatMul(m, simple_patt_trans, m2);
+  }
+  
+  argDrawMode3D();              // Se cambia el contexto a 3D
   argDraw3dCamera(0, 0);        // Y la vista de la camara a 3D
-  glClear(GL_DEPTH_BUFFER_BIT); // Limpiamos buffer de profundidad
+  glClear(GL_DEPTH_BUFFER_BIT); // Se limpia buffer de profundidad
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);
-
-  argConvGlpara(mMarker->trans, gl_para);   
-  glMatrixMode(GL_MODELVIEW);           
-  glLoadMatrixd(gl_para);               
-
-  drawQuad();  
-
-  int i;
-  for (i=0; i<nobjects; i++) {
-    if (objects[i].visible) {   // Si el objeto es visible
-      argConvGlpara(objects[i].patt_trans, gl_para);   
-      glMatrixMode(GL_MODELVIEW);           
-      glLoadMatrixd(gl_para);   // Cargamos su matriz de transf.            
-      objects[i].drawme();      // Llamamos a su función de dibujar
-    }
+  
+  // Se dibuja el lienzo
+  argConvGlpara(mMarker->trans, gl_para);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixd(gl_para);
+  
+  drawQuad();
+  drawline(5.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 297.0, 0.0, 0.0);
+  drawline(5.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -210.0, 0.0);
+  drawline(5.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 210.0);
+  
+  // Se dibuja el puntero si se ha detectado la marca
+  if(pointer != -1) {
+    drawPointer(m2);
   }
-
+  
   glDisable(GL_DEPTH_TEST);
 }
 
@@ -162,7 +139,10 @@ static void init( void ) {
   if( (mMarker = arMultiReadConfigFile("data/marker.dat")) == NULL )
     print_error("Error en fichero marker.dat\n");
 
-  addObject("data/simple.patt", 120.0, c, drawPointer); 
+  // Cargamos el fichero de la marca simple
+  if((simple_patt_id = arLoadPatt("data/simple.patt")) < 0) 
+    print_error ("Error en carga de patron\n");
+
 
   argInit(&cparam, 1.0, 0, 0, 0, 0);   // Abrimos la ventana 
 }
@@ -172,6 +152,9 @@ static void mainLoop(void) {
   ARUint8 *dataPtr;
   ARMarkerInfo *marker_info;
   int marker_num, i, j, k;
+
+  double p_width = 120.0;        // Ancho del patron (marca)
+  double p_center[2] = {0.0, 0.0};   // Centro del patron (marca)
 
   // Capturamos un frame de la camara de video
   if((dataPtr = (ARUint8 *)arVideoGetImage()) == NULL) {
@@ -189,40 +172,27 @@ static void mainLoop(void) {
 
   arVideoCapNext();      // Frame pintado y analizado... A por otro!
   
-  for (i=0; i<nobjects; i++) {
+  // Si se detecta la multimarca (lienzo) se puede detectar el puntero
+  if(mMarker != NULL) {
+    // Se ve donde detecta el patron con mayor fiabilidad
     for(j = 0, k = -1; j < marker_num; j++) {
-      if(objects[i].id == marker_info[j].id) {
-        if (k == -1) k = j;
+      if(simple_patt_id == marker_info[j].id) {
+        if(k == -1) k = j;
         else if(marker_info[k].cf < marker_info[j].cf) k = j;
       }
     }
-    
-    if(k != -1) {   // Si ha detectado el patron en algun sitio...
-      objects[i].visible = 1;
-      arGetTransMat(&marker_info[k], objects[i].center, 
-        objects[i].width, objects[i].patt_trans);
-    } else { objects[i].visible = 0; }  // El objeto no es visible
   }
 
-  if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0){
-    draw();       // Dibujamos los objetos de la escena
-  /*    int i,j;
-  printf("multipatron\n");
-  for(i=0;i<3;i++){
-    for(j=0;j<4;j++)
-      printf("%f\t", mMarker->trans[i][j]);
-    printf("\n");
-  }
+  if(k != -1)   // Si ha detectado el patron en algun sitio...
+    // Obtener transformacion relativa entre la marca y la camara real
+    arGetTransMat(&marker_info[k], p_center, p_width, simple_patt_trans);
 
-  printf("patron\n");
-  for(i=0;i<3;i++){
-    for(j=0;j<4;j++)
-      printf("%f\t", objects[0].patt_trans[i][j]);
-    printf("\n");
-  }
-  sleep(0.5);*/
-  }
-  argSwapBuffers(); // Cambiamos el buffer con lo que tenga dibujado
+  //else if(canDraw) canDraw = !canDraw;  // Si no se detecta, no se puede pintar
+  
+  if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0)
+    drawAll(k);       // Se dibujan los objetos (lienzo y puntero)
+  
+  argSwapBuffers(); // Se cambia el buffer con lo que tenga dibujado
 }
 
 // ======== Main ====================================================
