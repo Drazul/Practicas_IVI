@@ -3,7 +3,7 @@ ARTOOLKITDIR = ../ARToolKit
 INC_DIR      = $(ARTOOLKITDIR)/include
 LIB_DIR      = $(ARTOOLKITDIR)/lib
 
-LIBS   = -lARgsub -lARvideo -lARMulti -lAR -lglut -lGLU -lGL -lm 
+LIBS   = -lARgsub -lARvideo -lARMulti -lAR -lglut -lGLU -lGL -lm -std=c99 -Wall
 
 NAMEEXEC     = main
 

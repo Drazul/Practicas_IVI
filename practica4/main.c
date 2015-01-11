@@ -5,6 +5,8 @@
 #include <AR/ar.h>
 #include <AR/arMulti.h>
 
+#define MAX_LINES 1000
+
 void print_error (char *error) {  printf("%s\n",error); exit(0); }
 
 struct TPaintbrush {            // Representa el pincel
@@ -15,27 +17,36 @@ struct TPaintbrush {            // Representa el pincel
 };
 
 enum TColor {                   // Colores disponibles para pintar
-  red = 0, blue, yellow, purple, orange, green, black, white, last=white 
+  red = 0, green, blue, black, white, yellow, purple, orange, last=orange 
 } color;                //last es para saber cual es el ultimo valor
+
+struct TLine{
+  float x1, y1, z1;             // Punto inicio
+  float x2, y2, z2;             // Punto fin
+  struct TPaintbrush paintbrush; // Pincel
+};
 
 // ==== Definicion de constantes y variables globales ===============
 ARMultiMarkerInfoT *mMarker;    // Estructura global Multimarca
 int simple_patt_id;             // Identificador unico de la marca simple
 double simple_patt_trans[3][4]; // Matriz de transformacion de la marca simple
 struct TPaintbrush paintbrush;  // Valor del pincel
-
+struct TLine lines[MAX_LINES];          // Almacena todas las lineas guardadas, junto con el pincel
+int sLine;                      // Valor que dice si dibujamos o no
+float lastPoint[3];             // Ultimo punto donde se detecto la marca 
+int numLines;
 
 // ======= Cambia el color del pincel ===============================
 void setRGB(enum TColor color) {
   switch(color) {
   case red:    paintbrush.r = 1.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case green:  paintbrush.r = 0.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
   case blue:   paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 1.0; break;
+  case black:  paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case white:  paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 1.0; break;
   case yellow: paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
   case purple: paintbrush.r = 0.5; paintbrush.g = 0.0; paintbrush.b = 0.5; break;
   case orange: paintbrush.r = 1.0; paintbrush.g = 0.7; paintbrush.b = 0.0; break;
-  case green:  paintbrush.r = 0.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
-  case black:  paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
-  case white:  paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 1.0; break;
   }
 }
 
@@ -58,8 +69,11 @@ static void keyboard(unsigned char key, int x, int y) {
         paintbrush.thickness ++;
       break;
     case '-': 
-      if (paintbrush.thickness -1 > 2)
+      if (paintbrush.thickness - 1 > 2)
         paintbrush.thickness --;
+      break;
+    case 'P': case 'p': sLine = !sLine; break;
+
   }
 }
 
@@ -118,6 +132,37 @@ void drawPointer(double m2[3][4]) {
   glPopMatrix();
 }
 
+void saveLine(double m2[3][4]) {
+  if (numLines < MAX_LINES) {
+    lines[numLines].x1 = lastPoint[0];
+    lines[numLines].y1 = lastPoint[1];
+    lines[numLines].z1 = lastPoint[2];
+
+    lines[numLines].x2 = m2[0][3];
+    lines[numLines].y2 = m2[1][3];
+    lines[numLines].z2 = m2[2][3];
+
+    lines[numLines].paintbrush.thickness = paintbrush.thickness;
+    lines[numLines].paintbrush.r = paintbrush.r;
+    lines[numLines].paintbrush.g = paintbrush.g;
+    lines[numLines].paintbrush.b = paintbrush.b;
+    
+    numLines ++;
+  }
+}
+
+void paintLines() {
+  for (int i = 0; i < numLines; ++i) {
+    // Dibujamos la linea almacenada
+    drawline(lines[i].paintbrush.thickness, lines[i].paintbrush.r, lines[i].paintbrush.g, lines[i].paintbrush.b,
+        lines[i].x1, lines[i].y1, lines[i].z1, lines[i].x2, lines[i].y2, lines[i].z2);
+    
+    // Dibujamos la proyección sobre el terreno, en gris y quitando z
+    drawline(lines[i].paintbrush.thickness, 0.5, 0.5, 0.5,
+        lines[i].x1, lines[i].y1, 0, lines[i].x2, lines[i].y2, 0);
+  }
+}
+
 // ======== draw ====================================================
 void drawAll(int k) {
   double gl_para[16];        
@@ -144,7 +189,16 @@ void drawAll(int k) {
   // Se dibuja el puntero si se ha detectado la marca
   if(k != -1) {
     drawPointer(m2);
+
+    if (sLine)
+      saveLine(m2);
+
+    lastPoint[0] = m2[0][3];
+    lastPoint[1] = m2[1][3];
+    lastPoint[2] = m2[2][3];
   }
+
+  paintLines(); //Se dibujan las líneas guardadas
   
   glDisable(GL_DEPTH_TEST);
 }
@@ -153,7 +207,6 @@ void drawAll(int k) {
 static void init( void ) {
   ARParam  wparam, cparam;   // Parametros intrinsecos de la camara
   int xsize, ysize;          // Tamano del video de camara (pixels)
-  double c[2] = {0.0, 0.0};  // Centro de patron (por defecto)
 
   // Abrimos dispositivo de video
   if(arVideoOpen("-dev=/dev/video0") < 0) exit(0);  
@@ -179,6 +232,8 @@ static void init( void ) {
 
   paintbrush.thickness = 3.0;
   color = red;
+  sLine = 0;
+  numLines = 0;
   setRGB(red);
 }
 
@@ -186,7 +241,7 @@ static void init( void ) {
 static void mainLoop(void) {
   ARUint8 *dataPtr;
   ARMarkerInfo *marker_info;
-  int marker_num, i, j, k;
+  int marker_num, j, k;
 
   double p_width = 120.0;        // Ancho del patron (marca)
   double p_center[2] = {0.0, 0.0};   // Centro del patron (marca)
@@ -223,9 +278,9 @@ static void mainLoop(void) {
     arGetTransMat(&marker_info[k], p_center, p_width, simple_patt_trans);
   
   if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0)
-    drawAll(k);       // Se dibujan los objetos (lienzo y puntero)
+    drawAll(k);      // Se dibujan todos los objetos
   
-  argSwapBuffers(); // Se cambia el buffer con lo que tenga dibujado
+  argSwapBuffers();  // Se cambia el buffer con lo que tenga dibujado
 }
 
 // ======== Main ====================================================
