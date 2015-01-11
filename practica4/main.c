@@ -14,8 +14,8 @@ struct TPaintbrush {            // Representa el pincel
 };
 
 enum TColor {                   // Colores disponibles para pintar
-  red = 0, blue, yellow, purple, orange, green, black, white, last=white //last es para saber cual es el ultimo valor
-} color;
+  red = 0, blue, yellow, purple, orange, green, black, white, last=white 
+} color;                //last es para saber cual es el ultimo valor
 
 // ==== Definicion de constantes y variables globales ===============
 ARMultiMarkerInfoT *mMarker;    // Estructura global Multimarca
@@ -23,6 +23,20 @@ int simple_patt_id;             // Identificador unico de la marca simple
 double simple_patt_trans[3][4]; // Matriz de transformacion de la marca simple
 struct TPaintbrush paintbrush;  // Valor del pincel
 
+
+// ======= Cambia el color del pincel ===============================
+void setRGB(enum TColor color) {
+  switch(color) {
+  case red:    paintbrush.r = 1.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case blue:   paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 1.0; break;
+  case yellow: paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
+  case purple: paintbrush.r = 0.5; paintbrush.g = 0.0; paintbrush.b = 0.5; break;
+  case orange: paintbrush.r = 1.0; paintbrush.g = 0.7; paintbrush.b = 0.0; break;
+  case green:  paintbrush.r = 0.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
+  case black:  paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case white:  paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 1.0; break;
+  }
+}
 
 // ======== cleanup =================================================
 static void cleanup(void) {   // Libera recursos al salir ...
@@ -37,19 +51,6 @@ static void keyboard(unsigned char key, int x, int y) {
       if(color + 1 > last) color = 0;
       else color = color + 1;
       setRGB(color);
-  }
-}
-
-void setRGB(enum TColor color) {
-  switch(color) {
-  case red:    paintbrush.r = 1.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
-  case blue:   paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 1.0; break;
-  case yellow: paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
-  case purple: paintbrush.r = 0.5; paintbrush.g = 0.0; paintbrush.b = 0.5; break;
-  case orange: paintbrush.r = 1.0; paintbrush.g = 0.7; paintbrush.b = 0.0; break;
-  case green:  paintbrush.r = 0.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
-  case black:  paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
-  case white:  paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 1.0; break;
   }
 }
 
@@ -109,12 +110,11 @@ void drawPointer(double m2[3][4]) {
 }
 
 // ======== draw ====================================================
-void drawAll(int pointer) {
-  double gl_para[16];         // Esta matriz 4x4 es la usada por OpenGL
-  double m[3][4], m2[3][4];   // Matrices para almacenar la inversa de la matriz del multipatron y para almacenar la posicion relativa entre patron y multipatron
-  
-  // Se calcula la posicion relativa entre patron y multipatron, si se ha detectado la marca que representa el puntero
-  if(pointer != -1) {
+void drawAll(int k) {
+  double gl_para[16];        
+  double m[3][4], m2[3][4];   
+
+  if(k != -1) {
     arUtilMatInv(mMarker->trans, m);
     arUtilMatMul(m, simple_patt_trans, m2);
   }
@@ -131,12 +131,9 @@ void drawAll(int pointer) {
   glLoadMatrixd(gl_para);
   
   drawQuad();
-  drawline(5.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 297.0, 0.0, 0.0);
-  drawline(5.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, -210.0, 0.0);
-  drawline(5.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 210.0);
   
   // Se dibuja el puntero si se ha detectado la marca
-  if(pointer != -1) {
+  if(k != -1) {
     drawPointer(m2);
   }
   
@@ -211,8 +208,6 @@ static void mainLoop(void) {
   if(k != -1)   // Si ha detectado el patron en algun sitio...
     // Obtener transformacion relativa entre la marca y la camara real
     arGetTransMat(&marker_info[k], p_center, p_width, simple_patt_trans);
-
-  //else if(canDraw) canDraw = !canDraw;  // Si no se detecta, no se puede pintar
   
   if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0)
     drawAll(k);       // Se dibujan los objetos (lienzo y puntero)
