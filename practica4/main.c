@@ -7,10 +7,21 @@
 
 void print_error (char *error) {  printf("%s\n",error); exit(0); }
 
+struct TPaintbrush {            // Representa el pincel
+  float r;                    
+  float g;                  
+  float b;                   
+};
+
+enum TColor {                   // Colores disponibles para pintar
+  red = 0, blue, yellow, purple, orange, green, black, white, last=white //last es para saber cual es el ultimo valor
+} color;
+
 // ==== Definicion de constantes y variables globales ===============
 ARMultiMarkerInfoT *mMarker;    // Estructura global Multimarca
 int simple_patt_id;             // Identificador unico de la marca simple
 double simple_patt_trans[3][4]; // Matriz de transformacion de la marca simple
+struct TPaintbrush paintbrush;  // Valor del pincel
 
 
 // ======== cleanup =================================================
@@ -21,10 +32,26 @@ static void cleanup(void) {   // Libera recursos al salir ...
 // ======== keyboard ================================================
 static void keyboard(unsigned char key, int x, int y) {
   switch (key) {
-  case 0x1B: case 'Q': case 'q':  cleanup(); break;
+    case 0x1B: case 'Q': case 'q':  cleanup(); break;
+    case 'C': case'c':
+      if(color + 1 > last) color = 0;
+      else color = color + 1;
+      setRGB(color);
   }
 }
 
+void setRGB(enum TColor color) {
+  switch(color) {
+  case red:    paintbrush.r = 1.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case blue:   paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 1.0; break;
+  case yellow: paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
+  case purple: paintbrush.r = 0.5; paintbrush.g = 0.0; paintbrush.b = 0.5; break;
+  case orange: paintbrush.r = 1.0; paintbrush.g = 0.7; paintbrush.b = 0.0; break;
+  case green:  paintbrush.r = 0.0; paintbrush.g = 1.0; paintbrush.b = 0.0; break;
+  case black:  paintbrush.r = 0.0; paintbrush.g = 0.0; paintbrush.b = 0.0; break;
+  case white:  paintbrush.r = 1.0; paintbrush.g = 1.0; paintbrush.b = 1.0; break;
+  }
+}
 
 void drawline (float w, float r, float g, float b, float x1, float y1, float z1, float x2, float y2, float z2) {
   glColor3f(r, g, b);
@@ -54,7 +81,7 @@ void drawPointer(double m2[3][4]) {
   // Se dibuja el puntero
   glPushMatrix();
   glTranslatef(m2[0][3], m2[1][3], m2[2][3]);
-  glColor3f(0, 0, 0);
+  glColor3f(paintbrush.r, paintbrush.g, paintbrush.b);
   glutSolidSphere(2, 20, 20);
   glPopMatrix();
   
