@@ -276,7 +276,9 @@ static void mainLoop(void) {
   if(k != -1)   // Si ha detectado el patron en algun sitio...
     // Obtener transformacion relativa entre la marca y la camara real
     arGetTransMat(&marker_info[k], p_center, p_width, simple_patt_trans);
-  
+
+  else if (sLine) sLine = !sLine;  //Si deja de detectar la marca deja de almacenar lineas
+
   if(arMultiGetTransMat(marker_info, marker_num, mMarker) > 0)
     drawAll(k);      // Se dibujan todos los objetos
   
